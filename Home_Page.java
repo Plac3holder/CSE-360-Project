@@ -1,6 +1,5 @@
 package application;
 
-import Asu_Project_3.hhi_Patient_Intake;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
@@ -15,13 +14,14 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class Home_Page extends Application{
-	public void start(Stage primaryStage){
+	public Home_Page(Stage primaryStage){
 		BorderPane mainBox = new BorderPane();
 		
 		//Start of Navigation Bar
@@ -76,9 +76,15 @@ public class Home_Page extends Application{
 	    categoriesBox.getChildren().add(createCategory("Computing", 
 	    		new Rental_Box_Info("test", "test", "$45 per day", "Pristine", null),
 	            new Rental_Box_Info("test", "test", "$30/day", "Normal", null)));
-	    categoriesBox.getChildren().add(createCategory("Outdoor"));
-	    categoriesBox.getChildren().add(createCategory("Lab Tools"));
-	    categoriesBox.getChildren().add(createCategory("Others"));
+	    categoriesBox.getChildren().add(createCategory("Outdoor", 
+	    		new Rental_Box_Info("test", "test", "$45 per day", "Pristine", null),
+	            new Rental_Box_Info("test", "test", "$30/day", "Normal", null)));
+	    categoriesBox.getChildren().add(createCategory("Lab Tools",
+	    		new Rental_Box_Info("test", "test", "$45 per day", "Pristine", null),
+	            new Rental_Box_Info("test", "test", "$30/day", "Normal", null)));
+	    categoriesBox.getChildren().add(createCategory("Others", 
+	    		new Rental_Box_Info("test", "test", "$45 per day", "Pristine", null),
+	            new Rental_Box_Info("test", "test", "$30/day", "Normal", null)));
 	    
 	    ScrollPane scrollCatergories = new ScrollPane(categoriesBox);
 	    scrollCatergories.setFitToWidth(true);
@@ -116,11 +122,7 @@ public class Home_Page extends Application{
         
 	    
 	}
-	
-	public static void main(String[] args) {
-		launch(args);
-	}
-	
+		
 	public VBox createCategory(String catergoryTitle,Rental_Box_Info... boxInfos){
 
 	    Label catergoryLabel = new Label(catergoryTitle);
@@ -144,6 +146,12 @@ public class Home_Page extends Application{
 
 	    return categoryInfo;
 
+	}
+
+	@Override
+	public void start(Stage arg0) throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
@@ -181,6 +189,7 @@ class Rental_Box_Info extends VBox{
         Button addButton = new Button("+ Add");
         addButton.setStyle("-fx-background-color:#2563eb;" + "-fx-text-fill:white;");
         Region whitespace = new Region();
+        HBox.setHgrow(whitespace, Priority.ALWAYS); 
         
         HBox rentalInfo = new HBox(10, priceLabel,whitespace,addButton);
         

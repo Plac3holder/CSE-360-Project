@@ -1,5 +1,6 @@
 package application;
 
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -57,6 +58,27 @@ BorderPane mainBox = new BorderPane();
 	    
 	    mainBox.setTop(navigationMainBox);
 	    //End of Navigation Bar
+	    
+	  //Navigation Buttons
+	    cartButton.setOnAction((ActionEvent myRentalsPage) ->
+        {
+        	 primaryStage.close();
+        	 Stage myCartPage = new Stage();
+             new My_Cart(myCartPage);
+        });
+	    rentalsButton.setOnAction((ActionEvent myRentalsPage) ->
+        {
+        	 primaryStage.close();
+        	 Stage myRentalPage = new Stage();
+             new New_Rental(myRentalPage);
+        });
+	    homeButton.setOnAction((ActionEvent myRentalsPage) ->
+        {
+        	 primaryStage.close();
+        	 Stage myHomePage = new Stage();
+             new Home_Page(myHomePage);
+        });
+	    
 	    
 	    VBox rentingBox = new VBox();
 	    
