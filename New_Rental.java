@@ -28,6 +28,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 
+import App.backend.DataManager;
+import App.backend.Equipment;
+import java.util.UUID;
+
 public class New_Rental extends Application{
 	public New_Rental(Stage primaryStage){
 		
@@ -234,6 +238,8 @@ public class New_Rental extends Application{
             	rentalTotalCost += 395;
             	newRental.setCost(rentalTotalCost);
             	newRental.setName(rentalInputName.getText());
+				Equipment equipment = new Equipment(UUID.randomUUID().toString(),newRental.getName(),newRental.getCatergory(),newRental.getCondition(),dailyRate,deposit,"OWNER-001","AVAILABLE");
+    			DataManager.addEquipment(equipment);
             	Label rentalName = new Label("Rental Name: " + newRental.getName().trim());
             	ImageView rentalImage = new ImageView(userImage.getImage());
             	rentalImage.setFitWidth(100);
