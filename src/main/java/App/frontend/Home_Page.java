@@ -1,6 +1,8 @@
 package App.frontend;
 
-import javafx.application.Application;
+import App.backend.DataManager;
+import App.backend.Equipment;
+
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,12 +22,17 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-public class Home_Page extends Application {
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class Home_Page {
+
+    public VBox categoriesBox;
+
     public Home_Page(Stage primaryStage) {
         BorderPane mainBox = new BorderPane();
         mainBox.setStyle("-fx-background-color: #f9fafb;");
 
-        // --- Start of Navigation Bar ---
         BorderPane navigationMainBox = new BorderPane();
         navigationMainBox.setStyle("-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;");
         navigationMainBox.setPadding(new Insets(10, 20, 10, 20));
@@ -48,6 +55,8 @@ public class Home_Page extends Application {
             button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: #f3f4f6; -fx-text-fill: #111827; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 5;"));
         }
 
+        homeButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #0284c7; -fx-font-weight: bold; -fx-border-color: transparent transparent #0284c7 transparent; -fx-border-width: 0 0 2 0;");
+
         navigationLeftBar.getChildren().addAll(pageTitle, homeButton, rentingButton, cartButton, rentalsButton);
 
         HBox navigationRightBar = new HBox(15);
@@ -61,33 +70,28 @@ public class Home_Page extends Application {
         Button profileButton = new Button("💀");
         profileButton.setStyle("-fx-background-color: #4b5563; -fx-text-fill: white; -fx-background-radius: 20; -fx-min-width: 40; -fx-min-height: 40; -fx-max-width: 40; -fx-max-height: 40; -fx-font-size: 16px; -fx-padding: 0; -fx-alignment: center;");
 
+        profileButton.setOnAction(e -> {
+            primaryStage.close();
+            new Admin_Dashboard(new Stage());
+        });
+
         navigationRightBar.getChildren().addAll(searchBar, profileButton);
 
         navigationMainBox.setLeft(navigationLeftBar);
         navigationMainBox.setRight(navigationRightBar);
         mainBox.setTop(navigationMainBox);
-        // --- End of Navigation Bar ---
 
-        // --- Categories Layout ---
-        VBox categoriesBox = new VBox(30);
+        categoriesBox = new VBox(30);
         categoriesBox.setPadding(new Insets(30, 40, 30, 40));
         categoriesBox.setStyle("-fx-background-color: transparent;");
 
-        categoriesBox.getChildren().add(createCategory("Computing Devices",
-                new Rental_Box_Info("MacBook Pro M2 16\"", "High-performance workstation for video editing...", "$45/day", "PRISTINE", "/App/images/macbook.png"),
-                new Rental_Box_Info("Dell XPS 15", "Solid all-around Windows laptop for general office use...", "$30/day", "NORMAL WEAR", "/App/images/dell.png")));
-
-        categoriesBox.getChildren().add(createCategory("Audio/Visual Gear",
-                new Rental_Box_Info("Sony A7S III Kit", "Includes 24-70mm GM lens, 3 batteries...", "$85/day", "PRISTINE", "/App/images/camera.png"),
-                new Rental_Box_Info("DJI Mavic 3 Pro", "Fly More Combo included. Perfect for cinematic...", "$60/day", "NORMAL WEAR", "/App/images/drone.png")));
+        loadMarketplaceEquipment();
 
         ScrollPane scrollCategories = new ScrollPane(categoriesBox);
         scrollCategories.setFitToWidth(true);
         scrollCategories.setStyle("-fx-background-color: transparent; -fx-background: #f9fafb; -fx-border-color: transparent;");
         mainBox.setCenter(scrollCategories);
-        // --- End Of Categories Layout ---
 
-        // --- Navigation Button Actions ---
         rentingButton.setOnAction((ActionEvent event) -> {
             primaryStage.close();
             new Active_Renting(new Stage());
@@ -105,6 +109,35 @@ public class Home_Page extends Application {
         primaryStage.setTitle("EquipRent - Home");
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private void loadMarketplaceEquipment() {
+        categoriesBox.getChildren().clear();
+        ArrayList<Equipment> allEquip = DataManager.loadEquipment();
+
+        HashMap<String, ArrayList<Rental_Box_Info>> categorizedItems = new HashMap<>();
+
+        for (Equipment eq : allEquip) {
+            // Hides items that you own so you don't rent your own stuff!
+            if (eq.getStatus().equals("AVAILABLE")) {                String cat = eq.getCategory();
+                categorizedItems.putIfAbsent(cat, new ArrayList<>());
+
+                Rental_Box_Info box = new Rental_Box_Info(eq);
+                categorizedItems.get(cat).add(box);
+            }
+        }
+
+        for (String cat : categorizedItems.keySet()) {
+            ArrayList<Rental_Box_Info> boxes = categorizedItems.get(cat);
+            Rental_Box_Info[] boxArray = boxes.toArray(new Rental_Box_Info[0]);
+            categoriesBox.getChildren().add(createCategory(cat, boxArray));
+        }
+
+        if (categorizedItems.isEmpty()) {
+            Label emptyLabel = new Label("No equipment available right now. Check back later!");
+            emptyLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #6b7280;");
+            categoriesBox.getChildren().add(emptyLabel);
+        }
     }
 
     public VBox createCategory(String categoryTitle, Rental_Box_Info... boxInfos) {
@@ -133,34 +166,43 @@ public class Home_Page extends Application {
         categoryContainer.getChildren().addAll(headerBox, rentalInfoBox);
         return categoryContainer;
     }
-
-    @Override
-    public void start(Stage arg0) {}
 }
 
 class Rental_Box_Info extends VBox {
-    public Rental_Box_Info(String title, String description, String price, String condition, String imageFile) {
+
+    // Now completely wired to accept the full Equipment object!
+    public Rental_Box_Info(Equipment eq) {
         setSpacing(10);
         setPadding(new Insets(0, 0, 15, 0));
         setPrefWidth(240);
         setStyle("-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-width: 1; -fx-border-radius: 4; -fx-background-radius: 4;");
 
         ImageView rentalImage = new ImageView();
-        try {
-            String imagePath = getClass().getResource(imageFile).toExternalForm();
-            rentalImage.setImage(new Image(imagePath));
-        } catch (Exception e) {
-            System.out.println("Could not find image: " + imageFile);
+        String imageFile = eq.getImagePath();
+
+        if (imageFile != null && !imageFile.trim().isEmpty()) {
+            try {
+                if (imageFile.startsWith("file:") || imageFile.startsWith("http")) {
+                    rentalImage.setImage(new Image(imageFile));
+                } else {
+                    String imagePath = java.util.Objects.requireNonNull(getClass().getResource(imageFile)).toExternalForm();
+                    rentalImage.setImage(new Image(imagePath));
+                }
+            } catch (Exception e) {
+                System.out.println("Could not load image: " + imageFile);
+            }
         }
+
         rentalImage.setFitWidth(238);
         rentalImage.setFitHeight(140);
+        rentalImage.setPreserveRatio(true);
 
         StackPane imageWrapper = new StackPane(rentalImage);
-        imageWrapper.setStyle("-fx-background-color: #374151; -fx-background-radius: 4 4 0 0;");
+        imageWrapper.setStyle("-fx-background-color: #e5e7eb; -fx-background-radius: 4 4 0 0;");
         imageWrapper.setPrefHeight(140);
 
-        Label conditionBadge = new Label(condition);
-        if (condition.equalsIgnoreCase("PRISTINE")) {
+        Label conditionBadge = new Label(eq.getCondition());
+        if (eq.getCondition().equalsIgnoreCase("PRISTINE")) {
             conditionBadge.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 4 8; -fx-background-radius: 2;");
         } else {
             conditionBadge.setStyle("-fx-background-color: #f3f4f6; -fx-text-fill: #4b5563; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 4 8; -fx-background-radius: 2; -fx-border-color: #d1d5db; -fx-border-radius: 2;");
@@ -173,21 +215,41 @@ class Rental_Box_Info extends VBox {
         VBox textContent = new VBox(5);
         textContent.setPadding(new Insets(10, 15, 0, 15));
 
-        Label rentalTitle = new Label(title);
+        Label rentalTitle = new Label(eq.getName());
         rentalTitle.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #111827;");
 
-        Label rentalDesc = new Label(description);
+        Label rentalDesc = new Label("Owner: " + eq.getOwnerId());
         rentalDesc.setWrapText(true);
         rentalDesc.setStyle("-fx-font-size: 12px; -fx-text-fill: #6b7280;");
         rentalDesc.setPrefHeight(40);
 
         textContent.getChildren().addAll(rentalTitle, rentalDesc);
 
-        Label priceLabel = new Label(price);
+        Label priceLabel = new Label("$" + String.format("%.2f", eq.getDailyRate()) + "/day");
         priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #111827;");
 
         Button addButton = new Button("Add");
         addButton.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 16; -fx-background-radius: 4; -fx-cursor: hand;");
+
+        // Smarter Add Button Logic
+        addButton.setOnAction(e -> {
+            boolean alreadyInCart = false;
+            for (Equipment cartItem : My_Cart.cart) {
+                if (cartItem.getId().equals(eq.getId())) {
+                    alreadyInCart = true;
+                    break;
+                }
+            }
+
+            if (!alreadyInCart) {
+                My_Cart.cart.add(eq);
+                addButton.setText("Added!");
+                addButton.setStyle("-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 16; -fx-background-radius: 4;");
+            } else {
+                addButton.setText("In Cart");
+                addButton.setStyle("-fx-background-color: #6b7280; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 16; -fx-background-radius: 4;");
+            }
+        });
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);

@@ -127,4 +127,38 @@ public class DataManager {
         }
         return count;
     }
+
+    public static void deleteEquipment(String equipmentId) {
+        ArrayList<Equipment> list = loadEquipment();
+        list.removeIf(e -> e.getId().equals(equipmentId));
+        saveEquipment(list);
+    }
+
+    public static void returnEquipment(String rentalId, String equipmentId) {
+        // 1. Mark the rental record as returned and rewrite the text file
+        ArrayList<RentalRecord> rentals = loadRentalRecords();
+        for (RentalRecord r : rentals) {
+            if (r.getRentalId().equals(rentalId)) {
+                r.markReturned();
+                break;
+            }
+        }
+        try (PrintWriter pw = new PrintWriter(new FileWriter(RENTALS_FILE))) {
+            for (RentalRecord r : rentals) {
+                pw.println(r.toFileString());
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving returns: " + e.getMessage());
+        }
+
+        // 2. Put the item back on the market
+        ArrayList<Equipment> equipmentList = loadEquipment();
+        for (Equipment e : equipmentList) {
+            if (e.getId().equals(equipmentId)) {
+                e.setStatus("AVAILABLE");
+                break;
+            }
+        }
+        saveEquipment(equipmentList);
+    }
 }

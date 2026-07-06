@@ -1,5 +1,9 @@
 package App.frontend;
 
+import App.backend.DataManager;
+import App.backend.Equipment;
+import App.backend.RentalRecord;
+
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -15,12 +19,17 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+
 public class Active_Renting {
+
+    public VBox tableRows;
+    public Label showingLabel;
+
     public Active_Renting(Stage primaryStage) {
         BorderPane mainBox = new BorderPane();
         mainBox.setStyle("-fx-background-color: #f9fafb;");
 
-        // --- Start of Navigation Bar ---
         BorderPane navigationMainBox = new BorderPane();
         navigationMainBox.setStyle("-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;");
         navigationMainBox.setPadding(new Insets(10, 20, 10, 20));
@@ -43,6 +52,8 @@ public class Active_Renting {
             button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: #f3f4f6; -fx-text-fill: #111827; -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 5;"));
         }
 
+        rentingButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #0284c7; -fx-font-weight: bold; -fx-border-color: transparent transparent #0284c7 transparent; -fx-border-width: 0 0 2 0;");
+
         navigationLeftBar.getChildren().addAll(pageTitle, homeButton, rentingButton, cartButton, rentalsButton);
 
         HBox navigationRightBar = new HBox(15);
@@ -56,14 +67,17 @@ public class Active_Renting {
         Button profileButton = new Button("💀");
         profileButton.setStyle("-fx-background-color: #4b5563; -fx-text-fill: white; -fx-background-radius: 20; -fx-min-width: 40; -fx-min-height: 40; -fx-max-width: 40; -fx-max-height: 40; -fx-font-size: 16px; -fx-padding: 0; -fx-alignment: center;");
 
+        profileButton.setOnAction(e -> {
+            primaryStage.close();
+            new Admin_Dashboard(new Stage());
+        });
+
         navigationRightBar.getChildren().addAll(searchBar, profileButton);
 
         navigationMainBox.setLeft(navigationLeftBar);
         navigationMainBox.setRight(navigationRightBar);
         mainBox.setTop(navigationMainBox);
-        // --- End of Navigation Bar ---
 
-        // --- Navigation Button Actions ---
         cartButton.setOnAction((ActionEvent e) -> {
             primaryStage.close();
             new My_Cart(new Stage());
@@ -77,7 +91,6 @@ public class Active_Renting {
             new Home_Page(new Stage());
         });
 
-        // --- Main Content Area (Active Renting) ---
         VBox contentBox = new VBox(20);
         contentBox.setPadding(new Insets(30, 40, 30, 40));
 
@@ -116,24 +129,20 @@ public class Active_Renting {
         Label col2 = createHeaderLabel("Owner ID", 120);
         Label col3 = createHeaderLabel("Expected Return Date", 160);
         Label col4 = createHeaderLabel("Security Deposit Held", 160);
-        Label col5 = createHeaderLabel("Status", 100);
+        Label col5 = createHeaderLabel("Status & Action", 100);
 
         tableHeader.getChildren().addAll(col1, col2, col3, col4, col5);
 
-        VBox tableRows = new VBox();
-        tableRows.getChildren().addAll(
-                createTableRow("Manfrotto Professional Tripod", "Camera Gear", "USR-8921", "Oct 24, 2026", "$150.00", "ACTIVE"),
-                createTableRow("Tektronix Digital Oscilloscope", "Electronics Testing", "USR-3304", "Oct 28, 2026", "$800.00", "ACTIVE"),
-                createTableRow("DeWalt 20V Max Drill Set", "Power Tools", "USR-1198", "Nov 02, 2026", "$75.00", "ACTIVE"),
-                createTableRow("Industrial Laser Level", "Surveying", "USR-5542", "Today", "$250.00", "DUE")
-        );
+        tableRows = new VBox();
 
         HBox tableFooter = new HBox();
         tableFooter.setPadding(new Insets(15, 20, 15, 20));
         tableFooter.setAlignment(Pos.CENTER_LEFT);
-        Label showingLabel = new Label("Showing 1-4 of 4 active rentals");
+        showingLabel = new Label("Showing 0 active rentals");
         showingLabel.setStyle("-fx-text-fill: #6b7280; -fx-font-size: 13px;");
         tableFooter.getChildren().add(showingLabel);
+
+        loadActiveRentals();
 
         tableContainer.getChildren().addAll(tableHeader, tableRows, tableFooter);
         contentBox.getChildren().addAll(titleBox, toolbar, tableContainer);
@@ -150,6 +159,51 @@ public class Active_Renting {
         primaryStage.show();
     }
 
+    private void loadActiveRentals() {
+        tableRows.getChildren().clear();
+        ArrayList<RentalRecord> allRentals = DataManager.loadRentalRecords();
+        ArrayList<Equipment> allEquipment = DataManager.loadEquipment();
+
+        int count = 0;
+
+        for (RentalRecord record : allRentals) {
+            if (record.getRenterId().equals("USR-0001") && record.getStatus().equals("ACTIVE")) {
+
+                String itemName = "Unknown Item";
+                String itemCat = "N/A";
+                for (Equipment eq : allEquipment) {
+                    if (eq.getId().equals(record.getEquipmentId())) {
+                        itemName = eq.getName();
+                        itemCat = eq.getCategory();
+                        break;
+                    }
+                }
+
+                // Passing the entire RentalRecord to the row builder now!
+                HBox row = createTableRow(
+                        record,
+                        itemName,
+                        itemCat,
+                        record.getOwnerId(),
+                        record.getExpectedReturnDate(),
+                        "$" + String.format("%.2f", record.getSecurityDepositHeld()),
+                        record.getStatus()
+                );
+
+                tableRows.getChildren().add(row);
+                count++;
+            }
+        }
+
+        showingLabel.setText("Showing " + count + " active rentals");
+
+        if (count == 0) {
+            Label emptyLabel = new Label("You have no active rentals at the moment.");
+            emptyLabel.setStyle("-fx-text-fill: #9ca3af; -fx-font-style: italic; -fx-padding: 20;");
+            tableRows.getChildren().add(emptyLabel);
+        }
+    }
+
     private Label createHeaderLabel(String text, double width) {
         Label label = new Label(text);
         label.setPrefWidth(width);
@@ -157,7 +211,7 @@ public class Active_Renting {
         return label;
     }
 
-    private HBox createTableRow(String title, String category, String ownerId, String date, String deposit, String status) {
+    public HBox createTableRow(RentalRecord record, String title, String category, String ownerId, String date, String deposit, String status) {
         HBox row = new HBox(15);
         row.setPadding(new Insets(15, 20, 15, 20));
         row.setAlignment(Pos.CENTER_LEFT);
@@ -190,13 +244,22 @@ public class Active_Renting {
         Label statusBadge = new Label(status);
         statusBadge.setPrefWidth(80);
         statusBadge.setAlignment(Pos.CENTER);
-        if (status.equals("ACTIVE")) {
-            statusBadge.setStyle("-fx-background-color: #dcfce7; -fx-text-fill: #166534; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 4 8; -fx-background-radius: 12;");
-        } else {
-            statusBadge.setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #991b1b; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 4 8; -fx-background-radius: 12;");
-        }
+        statusBadge.setStyle("-fx-background-color: #dcfce7; -fx-text-fill: #166534; -fx-font-size: 12px; -fx-font-weight: bold; -fx-padding: 4 8; -fx-background-radius: 12;");
 
-        row.getChildren().addAll(itemBox, ownerLabel, dateLabel, depositLabel, statusBadge);
+        // --- NEW RETURN BUTTON ---
+        Button returnBtn = new Button("Return Item");
+        returnBtn.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 4 8; -fx-background-radius: 4; -fx-cursor: hand;");
+        returnBtn.setOnAction(e -> {
+            DataManager.returnEquipment(record.getRentalId(), record.getEquipmentId());
+            Stage currentStage = (Stage) returnBtn.getScene().getWindow();
+            currentStage.close();
+            new Active_Renting(new Stage());
+        });
+
+        VBox actionBox = new VBox(8, statusBadge, returnBtn);
+        actionBox.setAlignment(Pos.CENTER);
+
+        row.getChildren().addAll(itemBox, ownerLabel, dateLabel, depositLabel, actionBox);
 
         row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #f9fafb; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;"));
         row.setOnMouseExited(e -> row.setStyle("-fx-background-color: transparent; -fx-border-color: #e5e7eb; -fx-border-width: 0 0 1 0;"));

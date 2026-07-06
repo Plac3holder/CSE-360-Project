@@ -35,7 +35,7 @@ public class RentalRecord {
 
     public String toFileString() {
         return rentalId + "|" + equipmentId + "|" + renterId + "|" + ownerId + "|" +
-               expectedReturnDate + "|" + securityDepositHeld + "|" + status;
+                expectedReturnDate + "|" + securityDepositHeld + "|" + status;
     }
 
     public static RentalRecord fromFileString(String line) {

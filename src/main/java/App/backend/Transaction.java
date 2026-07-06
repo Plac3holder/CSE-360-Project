@@ -26,4 +26,11 @@ public class Transaction {
     public String toFileString() {
         return transactionId + "|" + equipmentId + "|" + renterId + "|" + totalCost + "|" + timestamp;
     }
+
+    public static Transaction fromFileString(String line) {
+        String[] p = line.split("\\|");
+        Transaction t = new Transaction(p[0], p[1], p[2], Double.parseDouble(p[3]));
+        t.timestamp = p[4]; // restore the original timestamp
+        return t;
+    }
 }

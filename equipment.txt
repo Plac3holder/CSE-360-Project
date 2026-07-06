@@ -1,0 +1,2 @@
+01439cb5|DJI Drone|Outdoor|NORMAL WEAR|30.0|240.0|USR-0001|AVAILABLE|file:/Users/dominicocw/Desktop/CSE360/INTELLIJ/CSE360-GProject/src/main/resources/App/images/drone.png
+97364e8d|MacBook Pro|Computing|HEAVY WEAR|25.0|200.0|USR-0001|AVAILABLE|file:/Users/dominicocw/Desktop/CSE360/INTELLIJ/CSE360-GProject/src/main/resources/App/images/macbook.png
